@@ -3,6 +3,7 @@ package org.csanchez.jenkins.plugins.kubernetes;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSource;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
@@ -175,6 +176,42 @@ public class PodVolumes {
             @Override
             public String getDisplayName() {
                 return "NFS Volume";
+            }
+        }
+    }
+
+    public static class PersistentVolumeClaimVolume extends PodVolume {
+        private String mountPath;
+        private String claimName;
+        private Boolean readOnly;
+
+        @DataBoundConstructor
+        public PersistentVolumeClaimVolume(String mountPath, String claimName, Boolean readOnly) {
+            this.mountPath = mountPath;
+            this.claimName = claimName;
+            this.readOnly = readOnly;
+        }
+
+        public Volume buildVolume(String volumeName) {
+            return new VolumeBuilder()
+              .withName(volumeName)
+              .withPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource(getClaimName(), getReadOnly()))
+              .build();
+        }
+
+        public String getMountPath() { return mountPath; }
+
+        public String getClaimName() { return claimName; }
+
+        public Boolean getReadOnly() {
+            return readOnly;
+        }
+
+        @Extension
+        public static class DescriptorImpl extends Descriptor<PodVolume> {
+            @Override
+            public String getDisplayName() {
+                return "Persistent Volume Claim";
             }
         }
     }
